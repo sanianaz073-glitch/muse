@@ -1,0 +1,21 @@
+{
+  "name": "allwa-engine",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.24",
+    "express": "^4.22.3",
+    "https-proxy-agent": "^9.1.0",
+    "mongodb": "^7.9.1",
+    "pino": "^10.4.0",
+    "qrcode": "^1.5.4"
+  }
+}

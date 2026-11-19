@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b141a">
+<meta name="description" content="AllWA - apna WhatsApp number QR ya code se jorein aur team ke saath ek panel se chats sambhalein.">
+<title>AllWA - WhatsApp panel</title>
+<style>
+:root{--bg:#0b141a;--panel:#111b21;--panel2:#202c33;--panel3:#1f2c34;--line:#2a3942;--txt:#e9edef;--muted:#8696a0;--muted2:#667781;--green:#00a884;--green2:#06cf9c;--blue:#53bdeb;--danger:#f15c6d;--warn:#ffbc38;--bubble-in:#202c33;--bubble-out:#005c4b;--shadow:0 8px 30px rgba(0,0,0,.45)}
+*{box-sizing:border-box}html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.45 "Inter",system-ui,-apple-system,"Segoe UI",sans-serif}
+button{font:inherit;cursor:pointer}input,select,textarea{font:inherit}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:#374248;border-radius:4px}
+/* ---------- auth ---------- */
+.login{min-height:100dvh;display:grid;place-items:center;padding:16px;background:radial-gradient(1000px 500px at 70% -10%,#103529 0,transparent 60%),var(--bg)}
+.auth{width:min(400px,100%);background:var(--panel);padding:26px 26px 22px;border-radius:18px;box-shadow:var(--shadow);display:grid;gap:16px}
+.auth-brand{display:flex;gap:12px;align-items:center}
+.logo{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#00a884,#53bdeb);color:#fff;font-weight:700;font-size:13px;display:grid;place-items:center;letter-spacing:.5px;flex:none}
+.auth-brand b{font-size:19px;display:block}.auth-brand span{color:var(--muted);font-size:13px}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--panel2);border-radius:11px;padding:4px;gap:4px}
+.auth-tabs button{border:0;background:transparent;color:var(--muted);padding:9px;border-radius:8px;font-weight:600}
+.auth-tabs button.on{background:var(--panel3);color:var(--txt);box-shadow:inset 0 0 0 1px var(--line)}
+.auth form{display:grid;gap:12px}.auth label{display:grid;gap:6px;font-size:13px;color:var(--muted)}
+.auth input{background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:11px 12px;border-radius:10px;outline:none}
+.auth input:focus{border-color:var(--green)}
+.btn{background:var(--green);color:#06251d;border:0;padding:11px 16px;border-radius:10px;font-weight:700;color:#e9edef;background:var(--green);color:#fff}
+.btn:hover{filter:brightness(1.07)}.btn:disabled{opacity:.55;cursor:default}
+.btn.ghost{background:var(--panel2);color:var(--txt);border:1px solid var(--line)}
+.btn.danger{background:transparent;color:var(--danger);border:1px solid var(--danger)}
+.btn.sm{padding:7px 12px;font-size:13px;border-radius:8px}
+.err{color:var(--danger);font-size:13px;min-height:16px;margin:0}
+.muted{color:var(--muted)}.small{font-size:12.5px}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+/* ---------- panel layout ---------- */
+.app{height:100dvh;display:grid;grid-template-columns:68px 380px 1fr auto;grid-template-rows:minmax(0,100%);overflow:hidden}
+.rail{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 0}
+.rail-btn{width:44px;height:44px;border-radius:12px;border:0;background:transparent;color:var(--muted);display:grid;place-items:center;font-size:19px;position:relative}
+.rail-btn:hover{background:var(--panel2);color:var(--txt)}.rail-btn.on{background:var(--panel2);color:var(--green2)}
+.rail-btn .tip{position:absolute;left:56px;background:#233138;color:var(--txt);padding:4px 9px;border-radius:7px;font-size:12px;white-space:nowrap;display:none;z-index:60}
+.rail-btn:hover .tip{display:block}
+.rail .sp{flex:1}
+.listpane{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;min-width:0}
+.pane-head{padding:14px 14px 8px;display:grid;gap:10px}
+.pane-head h2{margin:0;font-size:19px}
+.numswitch{display:flex;gap:8px;align-items:center}
+.numswitch select{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:9px;border-radius:10px;min-width:0}
+.search{display:flex;align-items:center;gap:8px;background:var(--panel2);border-radius:10px;padding:0 12px}
+.search input{flex:1;background:transparent;border:0;color:var(--txt);padding:10px 0;outline:none;min-width:0}
+.chipset{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:transparent;color:var(--muted);padding:5px 11px;border-radius:999px;font-size:12.5px}
+.chip.on{background:#103529;color:var(--green2);border-color:#103529}
+.chats{list-style:none;margin:0;padding:0 6px 12px;overflow-y:auto;flex:1;min-height:0}
+.chat{display:flex;gap:12px;padding:10px;border-radius:12px;cursor:pointer;align-items:center}
+.chat:hover{background:var(--panel2)}.chat.sel{background:var(--panel2)}
+.avatar{width:46px;height:46px;border-radius:50%;background:#2a3942;color:#cfd8dc;display:grid;place-items:center;font-weight:600;flex:none;font-size:16px}
+.avatar.g{background:#3b4a54}
+.chat .mid{flex:1;min-width:0}
+.chat .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;gap:6px;align-items:center}
+.chat .last{color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat .rt{text-align:right;display:grid;gap:4px;justify-items:end}
+.chat .tm{font-size:11.5px;color:var(--muted)}.chat .tm.un{color:var(--green2)}
+.badge{background:var(--green);color:#fff;font-size:11px;font-weight:700;min-width:19px;height:19px;border-radius:999px;display:grid;place-items:center;padding:0 5px}
+.labdot{display:inline-block;width:8px;height:8px;border-radius:50%}
+.pane{display:flex;flex-direction:column;min-width:0;background:var(--bg);position:relative;background-image:radial-gradient(rgba(134,150,160,.05) 1px,transparent 1px);background-size:22px 22px}
+.peerbar{display:flex;align-items:center;gap:12px;background:var(--panel);padding:8px 16px;border-bottom:1px solid var(--line);min-height:60px}
+.peer{display:flex;align-items:center;gap:12px;border:0;background:transparent;text-align:left;color:var(--txt);flex:1;min-width:0;padding:2px 4px}
+.peer .avatar{width:40px;height:40px}
+.peer-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.peer-sub{color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.icon-btn{width:38px;height:38px;border-radius:50%;border:0;background:transparent;color:var(--muted);font-size:17px;display:grid;place-items:center;flex:none}
+.icon-btn:hover{background:var(--panel2);color:var(--txt)}
+.msgs{flex:1;min-height:0;overflow-y:auto;padding:18px 7% 10px;display:flex;flex-direction:column;gap:3px}
+.day{align-self:center;background:var(--panel2);color:var(--muted);font-size:12px;padding:5px 12px;border-radius:8px;margin:10px 0}
+.m{max-width:65%;padding:7px 10px 5px;border-radius:10px;background:var(--bubble-in);position:relative;box-shadow:0 1px 1px rgba(0,0,0,.25);white-space:pre-wrap;word-break:break-word}
+.m.mine{align-self:flex-end;background:var(--bubble-out);border-top-right-radius:2px}
+.m:not(.mine){align-self:flex-start;border-top-left-radius:2px}
+.m .qt{border-left:3px solid var(--green2);background:rgba(0,0,0,.22);border-radius:6px;padding:5px 8px;font-size:12.5px;color:var(--muted);margin-bottom:5px}
+.m .meta{display:flex;gap:6px;justify-content:flex-end;font-size:11px;color:rgba(233,237,239,.65);margin-top:3px}
+.m .tick{color:var(--blue)}
+.m .mbtn{position:absolute;top:2px;right:2px;width:24px;height:24px;border:0;border-radius:50%;background:rgba(0,0,0,.3);color:#fff;display:none;font-size:12px}
+.m:hover .mbtn{display:block}
+.mmenu{position:fixed;z-index:80;background:#233138;border:1px solid var(--line);border-radius:10px;padding:5px;min-width:170px;box-shadow:var(--shadow)}
+.mmenu button{display:block;width:100%;text-align:left;background:transparent;border:0;color:var(--txt);padding:8px 10px;border-radius:7px}
+.mmenu button:hover{background:var(--panel2)}
+.reply-bar{display:none;align-items:center;gap:10px;background:var(--panel);border-top:1px solid var(--line);padding:8px 16px;font-size:13px;color:var(--muted)}
+.reply-bar.on{display:flex}.reply-bar .qt{flex:1;border-left:3px solid var(--green2);padding-left:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.composer{position:relative;background:var(--panel);border-top:1px solid var(--line);padding:8px 12px;display:flex;gap:8px;align-items:flex-end}
+.composer textarea{flex:1;background:var(--panel2);border:0;border-radius:12px;color:var(--txt);padding:11px 14px;resize:none;max-height:120px;outline:none;min-width:0}
+.sendbtn{width:44px;height:44px;border-radius:50%;background:var(--green);color:#fff;border:0;font-size:18px;flex:none}
+.empty{margin:auto;text-align:center;color:var(--muted);max-width:340px;padding:20px}
+.empty .big{font-size:40px;margin-bottom:8px}
+/* drawer */
+.drawer{width:360px;background:var(--panel);border-left:1px solid var(--line);display:none;flex-direction:column;min-height:0;overflow-y:auto}
+.drawer.open{display:flex}
+.drawer-head{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line);font-weight:600}
+.drawer-body{padding:16px;display:grid;gap:18px}
+.drawer .who{text-align:center;display:grid;gap:4px;justify-items:center}
+.sec-t{font-size:12.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--green2);font-weight:700;margin-bottom:8px}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid rgba(42,57,66,.5);font-size:14px}
+.kv span:first-child{color:var(--muted)}
+.note{background:var(--panel2);border-radius:10px;padding:9px 11px;font-size:13.5px}
+.note .by{color:var(--muted);font-size:11.5px;margin-top:4px;display:flex;justify-content:space-between}
+.note .by button{background:none;border:0;color:var(--danger)}
+textarea.in,input.in,select.in{background:var(--panel2);border:1px solid var(--line);color:var(--txt);padding:10px 12px;border-radius:10px;outline:none;width:100%}
+textarea.in:focus,input.in:focus{border-color:var(--green)}
+.row-gap{display:flex;gap:8px}.row-gap>*{flex:1}
+.chk{display:flex;gap:9px;align-items:center;padding:6px 0;font-size:14px}
+.chk input{width:17px;height:17px;accent-color:var(--green)}
+/* sections */
+.section{display:none;flex-direction:column;min-height:0;flex:1;background:var(--panel)}
+.section.on{display:flex}
+.sec-head{padding:16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.sec-head h2{margin:0;font-size:19px;flex:1}
+.sec-body{padding:16px;overflow-y:auto;display:grid;gap:14px;align-content:start}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:10px}
+.card h3{margin:0;font-size:16px}
+.pill{display:inline-block;padding:2.5px 10px;border-radius:999px;font-size:11.5px;font-weight:700}
+.pill.ok{background:#103529;color:var(--green2)}.pill.bad{background:#3d1a20;color:var(--danger)}.pill.warn{background:#3a2f10;color:var(--warn)}.pill.grey{background:#233138;color:var(--muted)}
+.bc-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+progress{width:100%;height:8px;accent-color:var(--green)}
+table.tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.tbl td,.tbl th{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left}
+/* link screen */
+.linkwrap{min-height:100dvh;display:grid;place-items:center;padding:16px;background:var(--bg)}
+.linkcard{width:min(430px,100%);background:var(--panel);border-radius:18px;box-shadow:var(--shadow);padding:26px;display:grid;gap:16px;text-align:center}
+.linkcard img.qr{width:280px;height:280px;background:#fff;border-radius:12px;padding:8px;margin:0 auto}
+.pair-code{font-size:30px;letter-spacing:5px;font-weight:800;color:var(--green2)}
+.steps{text-align:left;color:var(--muted);font-size:13.5px;display:grid;gap:5px;margin:0;padding-left:18px}
+/* modal */
+.modal{position:fixed;inset:0;z-index:90;background:rgba(11,20,26,.6);display:none;place-items:center;padding:16px}
+.modal.on{display:grid}
+.modal .box{background:var(--panel);border-radius:16px;padding:22px;width:min(430px,100%);display:grid;gap:13px;max-height:88dvh;overflow-y:auto}
+.modal h3{margin:0}
+.fwd-list{display:grid;gap:2px;max-height:260px;overflow-y:auto}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#233138;color:var(--txt);padding:11px 18px;border-radius:11px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:120;font-size:14px}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.lang-fab{position:fixed;left:14px;bottom:72px;z-index:95;min-width:38px;height:30px;padding:0 10px;border-radius:15px;border:1px solid rgba(134,150,160,.35);background:rgba(17,27,33,.92);color:#e9edef;font:600 12px/1 system-ui,sans-serif;letter-spacing:.5px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.lang-fab:hover{background:var(--green)}
+.spin{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--green);border-radius:50%;margin:14px auto;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (max-width:900px){
+  .app{grid-template-columns:56px 1fr;grid-template-rows:minmax(0,100%)}
+  .app .pane{display:none}.app.showchat .pane{display:flex;position:fixed;inset:0 0 0 56px;z-index:40}
+  .app.showchat .listpane{display:none}
+  .drawer{position:fixed;right:0;top:0;bottom:0;z-index:70;width:min(360px,92vw)}
+  .m{max-width:85%}.msgs{padding:14px 4% 8px}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= AUTH ================= -->
+<main class="login" id="authView" hidden>
+  <div class="auth">
+    <div class="auth-brand"><div class="logo">AW</div><div><b>AllWA</b><span>WhatsApp panel for teams</span></div></div>
+    <div class="auth-tabs" role="tablist">
+      <button type="button" class="on" id="tabLogin" data-t="login">Login</button>
+      <button type="button" id="tabSignup" data-t="signup_tab">Naya account</button>
+    </div>
+    <form id="loginForm" autocomplete="on">
+      <label><span data-t="email">Email</span><input name="email" type="email" autocomplete="username" required></label>
+      <label><span data-t="password">Password</span><input name="pass" type="password" autocomplete="current-password" required></label>
+      <button class="btn" type="submit" data-t="login">Login</button>
+      <p class="err" id="loginErr" role="alert"></p>
+    </form>
+    <form id="signupForm" autocomplete="on" hidden>
+      <label><span data-t="your_name">Aap ka naam</span><input name="name" autocomplete="name" required maxlength="120"></label>
+      <label><span data-t="email">Email</span><input name="email" type="email" autocomplete="email" required></label>
+      <label><span data-t="password">Password</span><input name="pass" type="password" autocomplete="new-password" minlength="8" required></label>
+      <label><span data-t="wa_number">WhatsApp number</span><input name="phone" inputmode="tel" placeholder="03001234567" autocomplete="tel"></label>
+      <label class="hp" aria-hidden="true">Website<input name="website" tabindex="-1" autocomplete="off"></label>
+      <button class="btn" type="submit" data-t="create_account">Account banayein</button>
+      <p class="muted small" data-t="signup_note">Account bante hi QR code (ya phone par code) aayega - scan karte hi aap ka WhatsApp yahan jur jayega.</p>
+      <p class="err" id="signupErr" role="alert"></p>
+    </form>
+  </div>
+</main>
+
+<!-- ================= LINK NUMBER ================= -->
+<main class="linkwrap" id="linkView" hidden>
+  <div class="linkcard">
+    <div class="auth-brand" style="justify-content:center"><div class="logo">AW</div><div style="text-align:left"><b>AllWA</b><span style="display:block">WhatsApp panel for teams</span></div></div>
+    <h3 style="margin:0" data-t="link_title">Apna WhatsApp jorein</h3>
+    <p class="muted small" style="margin:0" data-t="link_sub">QR code scan karein, ya isi phone par number se code le kar jorein. Jitne chahein numbers jor sakte hain.</p>
+    <form id="addNumForm" style="display:grid;gap:10px">
+      <input class="in" name="name" placeholder="Name for this number (panel only), e.g. Sales line" maxlength="80">
+      <input class="in" name="phone" inputmode="tel" placeholder="03001234567">
+      <button class="btn" type="submit" data-t="connect">Connect</button>
+      <p class="err" id="linkErr"></p>
+    </form>
+    <div id="qrArea" hidden>
+      <div class="auth-tabs" style="max-width:240px;margin:0 auto">
+        <button type="button" class="on" id="tabQr">QR code</button>
+        <button type="button" id="tabCode" data-t="code_tab">Code via phone number</button>
+      </div>
+      <div id="qrPane">
+        <p class="muted small" id="qrStatus">Generating QR… takes 10-30 seconds the first time.</p>
+        <div class="spin" id="qrSpin"></div>
+        <img class="qr" id="qrImg" alt="WhatsApp QR code" hidden>
+        <ol class="steps">
+          <li data-t="step1">Open WhatsApp on the phone you want to link</li>
+          <li>Settings → Linked devices → Link a device</li>
+          <li data-t="step3">Scan this QR (a new one is generated every 20 seconds)</li>
+        </ol>
+      </div>
+      <div id="codePane" hidden>
+        <p class="muted small" data-t="code_help">Linking WhatsApp on this same phone (can't scan a QR)? Enter your number to get a code.</p>
+        <div class="row-gap"><input class="in" id="pairPhone" inputmode="tel" placeholder="923001234567"><button class="btn" type="button" id="pairBtn" data-t="get_code">Get code</button></div>
+        <p class="pair-code" id="pairCode"></p>
+        <p class="muted small" id="pairHelp" hidden>WhatsApp kholen → Linked devices → Link a device → "Link with phone number instead" → <span data-t="enter_code">Enter this 8-character code</span></p>
+      </div>
+      <p class="muted small" id="waitLine">Waiting for the QR scan or code…</p>
+    </div>
+    <button class="btn ghost sm" id="linkLogout" data-t="logout">Logout</button>
+  </div>
+</main>
+
+<!-- ================= PANEL ================= -->
+<div class="app" id="panelView" hidden>
+  <nav class="rail">
+    <div class="logo" style="width:40px;height:40px;margin-bottom:8px">AW</div>
+    <button class="rail-btn on" data-sec="chats">💬<span class="tip" data-t="chats">Chats</span></button>
+    <button class="rail-btn" data-sec="broadcasts">📣<span class="tip" data-t="broadcasts">Broadcasts</span></button>
+    <button class="rail-btn" data-sec="status">⭕<span class="tip" data-t="status">Status</span></button>
+    <button class="rail-btn" data-sec="calls">📞<span class="tip" data-t="calls">Calls</span></button>
+    <button class="rail-btn" data-sec="channels">📢<span class="tip">Channels</span></button>
+    <button class="rail-btn" data-sec="numbers">📱<span class="tip" data-t="numbers">Numbers</span></button>
+    <div class="sp"></div>
+    <button class="rail-btn" data-sec="account">👤<span class="tip" data-t="account">My account</span></button>
+    <button class="rail-btn" id="railLogout">⏏<span class="tip" data-t="logout">Logout</span></button>
+  </nav>
+
+  <!-- chats section spans list+pane -->
+  <section class="listpane" id="listPane">
+    <div class="pane-head">
+      <h2 data-t="chats">Chats</h2>
+      <div class="numswitch">
+        <select id="numSelect" aria-label="WhatsApp number"></select>
+        <button class="btn sm" id="addNumBtn" title="Link number">+</button>
+      </div>
+      <label class="search">🔍<input id="chatSearch" data-t-ph="search_chats" placeholder="Search chats (name or number)"></label>
+      <div class="chipset" id="chipset">
+        <button class="chip on" data-f="all" data-t="all">All</button>
+        <button class="chip" data-f="unread">Unread</button>
+        <button class="chip" data-f="direct" data-t="direct">Direct chats only</button>
+        <button class="chip" data-f="groups" data-t="groups">Groups only</button>
+      </div>
+    </div>
+    <ul class="chats" id="chatList"></ul>
+    <p class="muted small" id="chatEmpty" style="padding:0 16px" hidden>No chats yet.</p>
+  </section>
+
+  <section class="pane" id="chatPane">
+    <div class="empty" id="paneEmpty"><div class="big">💬</div><p data-t="select_chat">Select a chat. Messages arrive automatically, no need to reload.</p><p class="small" id="lineState"></p></div>
+    <div id="chatMain" hidden style="display:flex;flex-direction:column;min-height:0;flex:1">
+      <div class="peerbar">
+        <button class="icon-btn" id="backBtn" style="display:none">←</button>
+        <button class="peer" id="peerBtn">
+          <span class="avatar" id="peerAv">?</span>
+          <span style="min-width:0"><span class="peer-name" id="peerName"></span><br><span class="peer-sub" id="peerSub"></span></span>
+        </button>
+        <span class="pill ok" id="connPill">connected</span>
+      </div>
+      <div class="msgs" id="msgs"></div>
+      <div class="reply-bar" id="replyBar"><span class="qt" id="replyTxt"></span><button class="icon-btn" id="replyCancel">✕</button></div>
+      <form class="composer" id="composer">
+        <textarea id="msgInput" rows="1" data-t-ph="type_msg" placeholder="Type a message"></textarea>
+        <button class="sendbtn" type="submit" title="Send">➤</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- other sections replace list+pane visually via grid placement -->
+  <section class="section" id="sec-broadcasts" style="grid-column:2/5">
+    <div class="sec-head"><h2 data-t="broadcasts">Broadcasts</h2><button class="btn sm" id="bcNewBtn">+ <span data-t="new_broadcast">New broadcast</span></button></div>
+    <div class="sec-body">
+      <form class="card" id="bcForm" hidden>
+        <h3 data-t="new_broadcast">New broadcast</h3>
+        <input class="in" id="bcName" placeholder="Broadcast name (only you see it)">
+        <textarea class="in" id="bcText" rows="3" placeholder="Message… {name} = recipient name"></textarea>
+        <div><div class="sec-t" data-t="recipients">Recipients — pick chats</div><div id="bcChats" style="max-height:220px;overflow-y:auto"></div></div>
+        <label class="chk"><span data-t="gap">Gap between messages (sec)</span><input class="in" id="bcGap" type="number" min="0" max="120" value="5" style="width:90px;flex:none"></label>
+        <div class="row-gap"><button class="btn" type="submit" data-t="send_broadcast">Send broadcast</button><button class="btn ghost" type="button" id="bcCancel">✕</button></div>
+        <p class="err" id="bcErr"></p>
+      </form>
+      <div id="bcList" style="display:grid;gap:12px"></div>
+      <p class="muted" id="bcEmpty">No broadcasts yet</p>
+    </div>
+  </section>
+
+  <section class="section" id="sec-status" style="grid-column:2/5">
+    <div class="sec-head"><h2 data-t="status">Status</h2></div>
+    <div class="sec-body"><div id="statusList" style="display:grid;gap:10px"></div><p class="muted" id="statusEmpty">No status updates from contacts in the last 7 days.</p></div>
+  </section>
+
+  <section class="section" id="sec-calls" style="grid-column:2/5">
+    <div class="sec-head"><h2 data-t="calls">Calls</h2></div>
+    <div class="sec-body"><div id="callList" style="display:grid;gap:10px"></div><p class="muted" id="callEmpty">No calls recorded yet. New calls will show up here automatically.</p></div>
+  </section>
+
+  <section class="section" id="sec-channels" style="grid-column:2/5">
+    <div class="sec-head"><h2>Channels</h2></div>
+    <div class="sec-body"><div class="empty"><div class="big">📢</div><p>Channels are not in the engine yet.</p></div></div>
+  </section>
+
+  <section class="section" id="sec-numbers" style="grid-column:2/5">
+    <div class="sec-head"><h2 data-t="numbers">Numbers</h2><button class="btn sm" id="numAddBtn">+ <span data-t="link_number">Link number</span></button></div>
+    <div class="sec-body"><div id="numList" style="display:grid;gap:12px"></div></div>
+  </section>
+
+  <section class="section" id="sec-account" style="grid-column:2/5">
+    <div class="sec-head"><h2 data-t="account">My account</h2></div>
+    <div class="sec-body">
+      <div class="card"><h3 id="accName"></h3><div class="kv"><span data-t="email">Email</span><span id="accEmail"></span></div><div class="kv"><span>WhatsApp</span><span id="accPhone"></span></div></div>
+      <form class="card" id="pwForm">
+        <h3 data-t="change_pw">Change password</h3>
+        <input class="in" type="password" id="pwCur" data-t-ph="cur_pw" placeholder="Current password" autocomplete="current-password">
+        <input class="in" type="password" id="pwNew" data-t-ph="new_pw" placeholder="New password (8+ characters)" autocomplete="new-password">
+        <button class="btn" type="submit" data-t="change_pw">Change password</button>
+        <p class="err" id="pwErr"></p>
+      </form>
+      <div class="card"><button class="btn danger" id="accLogout" data-t="logout">Logout</button></div>
+    </div>
+  </section>
+
+  <aside class="drawer" id="drawer">
+    <div class="drawer-head"><button class="icon-btn" id="drawerClose">✕</button><span data-t="contact_info">Contact info</span></div>
+    <div class="drawer-body">
+      <div class="who"><span class="avatar" id="drAv" style="width:72px;height:72px;font-size:24px">?</span><b id="drName" style="font-size:18px"></b><span class="muted small" id="drJid"></span></div>
+      <div>
+        <div class="sec-t">Labels</div>
+        <div id="drLabels"></div>
+        <form class="row-gap" id="newLabelForm" style="margin-top:8px"><input class="in" id="newLabelName" placeholder="New label"><button class="btn sm" type="submit">+</button></form>
+      </div>
+      <div>
+        <div class="sec-t">Notes</div>
+        <div id="drNotes" style="display:grid;gap:8px"></div>
+        <form style="display:grid;gap:8px;margin-top:8px" id="noteForm">
+          <textarea class="in" id="noteText" rows="2" placeholder="Note about this customer… (everyone on the team can see it)"></textarea>
+          <button class="btn sm" type="submit">+ Note</button>
+        </form>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<div class="modal" id="fwdModal">
+  <div class="box">
+    <h3 data-t="forward">Forward</h3>
+    <p class="muted small" style="margin:0">Up to 5 chats at a time. The customer will see it as a new message from you.</p>
+    <input class="in" id="fwdSearch" placeholder="Search chats (name or number)">
+    <div class="fwd-list" id="fwdList"></div>
+    <div class="row-gap"><button class="btn ghost" id="fwdCancel">✕</button><button class="btn" id="fwdSend" data-t="forward">Forward</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtTime = (ts) => ts ? new Date(ts*1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+const fmtDay = (ts) => ts ? new Date(ts*1000).toLocaleDateString([], {weekday:'short', day:'numeric', month:'short'}) : '';
+const initials = (n) => (n||'?').trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase() || '?';
+const isGroup = (jid) => String(jid||'').endsWith('@g.us');
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),2600); }
+
+/* ---------- i18n (simplified EN / Roman Urdu toggle for main labels) ---------- */
+const I18N = {
+  en: {login:'Login', signup_tab:'New account', email:'Email', password:'Password', your_name:'Your name', wa_number:'WhatsApp number', create_account:'Create account', signup_note:'Once your account is created, a QR code (or a phone code) will appear - scan it and your WhatsApp will be linked here.', link_title:'Link your WhatsApp', link_sub:'Scan the QR code, or link with a code using your phone number on this same phone. You can link as many numbers as you like.', connect:'Connect', code_tab:'Code via phone number', code_help:"Linking WhatsApp on this same phone (can't scan a QR)? Enter your number to get a code.", get_code:'Get code', enter_code:'Enter this 8-character code', step1:'Open WhatsApp on the phone you want to link', step3:'Scan this QR (a new one is generated every 20 seconds)', chats:'Chats', broadcasts:'Broadcasts', status:'Status', calls:'Calls', numbers:'Numbers', account:'My account', logout:'Logout', search_chats:'Search chats (name or number)', all:'All', direct:'Direct chats only', groups:'Groups only', select_chat:'Select a chat. Messages arrive automatically, no need to reload.', type_msg:'Type a message', new_broadcast:'New broadcast', recipients:'Recipients — pick chats', gap:'Gap between messages (sec)', send_broadcast:'Send broadcast', forward:'Forward', contact_info:'Contact info', change_pw:'Change password', cur_pw:'Current password', new_pw:'New password (8+ characters)', link_number:'Link number'},
+  ur: {login:'Login', signup_tab:'Naya account', email:'Email', password:'Password', your_name:'Aap ka naam', wa_number:'WhatsApp number', create_account:'Account banayein', signup_note:'Account bante hi QR code (ya phone par code) aayega - scan karte hi aap ka WhatsApp yahan jur jayega.', link_title:'Apna WhatsApp jorein', link_sub:'QR code scan karein, ya isi phone par number se code le kar jorein. Jitne chahein numbers jor sakte hain.', connect:'Connect', code_tab:'Number se code', code_help:'Isi phone par WhatsApp jorna hai (QR scan nahi ho sakta)? Apna number dein aur code lein.', get_code:'Code lein', enter_code:'Ye 8 harf wala code darj karein', step1:'Us phone par WhatsApp kholen jise jorna hai', step3:'Ye QR scan karein (har 20 second mein naya banta hai)', chats:'Chats', broadcasts:'Broadcasts', status:'Status', calls:'Calls', numbers:'Numbers', account:'Mera account', logout:'Logout', search_chats:'Chat dhoondein (naam ya number)', all:'Sab', direct:'Sirf direct chats', groups:'Sirf groups', select_chat:'Chat select karein. Messages khud aate rahenge, reload ki zaroorat nahi.', type_msg:'Message likhein', new_broadcast:'Naya broadcast', recipients:'Log chunein — chats', gap:'Messages ke darmiyan waqfa (sec)', send_broadcast:'Broadcast bhejein', forward:'Forward karein', contact_info:'Contact info', change_pw:'Password badlein', cur_pw:'Purana password', new_pw:'Naya password (8+ harf)', link_number:'Number jorein'}
+};
+let lang = 'en';
+try { lang = localStorage.getItem('allwa-lang') || 'en'; } catch {}
+function applyLang(){
+  const d = I18N[lang] || I18N.en;
+  $$('[data-t]').forEach((el) => { const k = el.dataset.t; if (d[k]) el.textContent = d[k]; });
+  $$('[data-t-ph]').forEach((el) => { const k = el.dataset.tPh; if (d[k]) el.placeholder = d[k]; });
+  document.documentElement.lang = lang === 'en' ? 'en' : 'ur-Latn';
+  const f = $('#langFab'); if (f) f.textContent = lang === 'en' ? 'EN' : 'UR';
+}
+const fab = document.createElement('button');
+fab.className = 'lang-fab'; fab.id = 'langFab'; fab.type = 'button';
+fab.addEventListener('click', () => { lang = lang === 'en' ? 'ur' : 'en'; try { localStorage.setItem('allwa-lang', lang); } catch {} applyLang(); });
+document.body.append(fab);
+
+/* ---------- API ---------- */
+let token = ''; try { token = localStorage.getItem('aw_token') || ''; } catch {}
+async function api(path, opts = {}) {
+  const r = await fetch(path, { ...opts, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}), ...(opts.headers || {}) } }).catch(() => null);
+  if (!r) return { ok: false, error: "Can't reach the server." };
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401 && token) { /* session may be checked by caller */ }
+  return { ...j, _status: r.status };
+}
+function setToken(t){ token = t || ''; try { t ? localStorage.setItem('aw_token', t) : localStorage.removeItem('aw_token'); } catch {} }
+
+/* ---------- state ---------- */
+let me = null, myNumbers = [], curNum = null, curChat = null, allChats = [], replyTo = null, panel = { labels: [], notes: {}, chatLabels: {} }, es = null, linkPoll = null, linkNumId = null, chatFilter = 'all';
+
+function show(view){
+  $('#authView').hidden = view !== 'auth';
+  $('#linkView').hidden = view !== 'link';
+  $('#panelView').hidden = view !== 'panel';
+  fab.style.display = view === 'panel' ? 'none' : '';
+}
+
+/* ---------- auth ---------- */
+$('#tabLogin').onclick = () => switchTab('login');
+$('#tabSignup').onclick = () => switchTab('signup');
+function switchTab(which){
+  $('#tabLogin').classList.toggle('on', which === 'login');
+  $('#tabSignup').classList.toggle('on', which === 'signup');
+  $('#loginForm').hidden = which !== 'login';
+  $('#signupForm').hidden = which !== 'signup';
+}
+$('#loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = new FormData(e.target), err = $('#loginErr'), btn = e.target.querySelector('button[type=submit]');
+  err.textContent = ''; btn.disabled = true;
+  const j = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email: f.get('email'), pass: f.get('pass') }) });
+  btn.disabled = false;
+  if (j.ok) { setToken(j.token); me = j.user; afterLogin(); } else err.textContent = j.error || 'Nahi ho saka.';
+});
+$('#signupForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (new FormData(e.target).get('website')) return; // honeypot
+  const f = new FormData(e.target), err = $('#signupErr'), btn = e.target.querySelector('button[type=submit]');
+  err.textContent = ''; btn.disabled = true;
+  const j = await api('/api/auth/signup', { method: 'POST', body: JSON.stringify({ name: f.get('name'), email: f.get('email'), pass: f.get('pass'), phone: f.get('phone') }) });
+  btn.disabled = false;
+  if (j.ok) { setToken(j.token); me = j.user; afterLogin(); } else err.textContent = j.error || 'Nahi ho saka.';
+});
+async function doLogout(){
+  await api('/api/auth/logout', { method: 'POST' });
+  setToken(''); me = null; myNumbers = []; curNum = null; curChat = null;
+  if (es) { es.close(); es = null; }
+  clearInterval(linkPoll);
+  show('auth');
+}
+$('#railLogout').onclick = doLogout;
+$('#accLogout').onclick = doLogout;
+$('#linkLogout').onclick = doLogout;
+
+async function afterLogin(){
+  const n = await api('/api/numbers');
+  myNumbers = n.numbers || [];
+  await loadPanelData();
+  if (!myNumbers.length) { show('link'); resetLinkForm(); return; }
+  curNum = myNumbers.find((x) => x.status === 'connected') || myNumbers[0];
+  enterPanel();
+}
+async function loadPanelData(){
+  const p = await api('/api/labels');
+  if (p.ok !== false && p.labels) panel = { labels: p.labels || [], notes: p.notes || {}, chatLabels: p.chatLabels || {} };
+}
+
+/* ---------- link number ---------- */
+function resetLinkForm(){ $('#qrArea').hidden = true; linkNumId = null; clearInterval(linkPoll); }
+$('#addNumForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = new FormData(e.target), err = $('#linkErr');
+  err.textContent = '';
+  const j = await api('/api/numbers', { method: 'POST', body: JSON.stringify({ name: f.get('name'), phone: f.get('phone') }) });
+  if (!j.ok) { err.textContent = j.error || 'Nahi ho saka.'; return; }
+  linkNumId = j.number.id;
+  $('#qrArea').hidden = false;
+  pollLink();
+  clearInterval(linkPoll);
+  linkPoll = setInterval(pollLink, 3000);
+});
+async function pollLink(){
+  if (!linkNumId) return;
+  const q = await api(`/api/numbers/${linkNumId}/qr`);
+  const st = $('#qrStatus'), img = $('#qrImg'), spin = $('#qrSpin');
+  if (q.status === 'connected') {
+    clearInterval(linkPoll);
+    st.textContent = 'Linked, loading chats…';
+    img.hidden = true; spin.hidden = true;
+    const n = await api('/api/numbers');
+    myNumbers = n.numbers || [];
+    curNum = myNumbers.find((x) => x.id === linkNumId) || myNumbers[0];
+    toast('Linked');
+    enterPanel();
+    return;
+  }
+  if (q.qrDataUrl) { img.src = q.qrDataUrl; img.hidden = false; spin.hidden = true; st.textContent = 'Scan this QR (a new one is generated every 20 seconds)'; }
+  else { st.textContent = 'Generating QR… takes 10-30 seconds the first time.'; spin.hidden = false; img.hidden = true; }
+}
+$('#tabQr').onclick = () => { $('#tabQr').classList.add('on'); $('#tabCode').classList.remove('on'); $('#qrPane').hidden = false; $('#codePane').hidden = true; };
+$('#tabCode').onclick = () => { $('#tabCode').classList.add('on'); $('#tabQr').classList.remove('on'); $('#qrPane').hidden = true; $('#codePane').hidden = false; };
+$('#pairBtn').onclick = async () => {
+  if (!linkNumId) { toast('Pehle Connect dabayein'); return; }
+  const phone = $('#pairPhone').value;
+  const j = await api(`/api/numbers/${linkNumId}/pair`, { method: 'POST', body: JSON.stringify({ phone }) });
+  if (j.ok && j.code) { $('#pairCode').textContent = String(j.code).match(/.{1,4}/g).join('-'); $('#pairHelp').hidden = false; }
+  else toast(j.error || 'Code nahi mila');
+};
+
+/* ---------- panel / sections ---------- */
+function enterPanel(){
+  show('panel');
+  buildNumSelect();
+  switchSection('chats');
+  if (curNum) { loadChats(); connectSSE(); }
+  renderAccount();
+}
+function switchSection(sec){
+  $$('.rail-btn[data-sec]').forEach((b) => b.classList.toggle('on', b.dataset.sec === sec));
+  const isChats = sec === 'chats';
+  $('#listPane').style.display = isChats ? '' : 'none';
+  $('#chatPane').style.display = isChats ? '' : 'none';
+  $('#drawer').classList.remove('open');
+  for (const s of ['broadcasts','status','calls','channels','numbers','account']) {
+    $('#sec-' + s).classList.toggle('on', s === sec);
+  }
+  if (sec === 'numbers') renderNumbers();
+  if (sec === 'broadcasts') renderBroadcasts();
+  if (sec === 'status') renderStatuses();
+  if (sec === 'calls') renderCalls();
+}
+$$('.rail-btn[data-sec]').forEach((b) => b.addEventListener('click', () => switchSection(b.dataset.sec)));
+$('#addNumBtn').onclick = () => { show('link'); resetLinkForm(); };
+$('#numAddBtn').onclick = () => { show('link'); resetLinkForm(); };
+
+function buildNumSelect(){
+  const sel = $('#numSelect');
+  sel.innerHTML = myNumbers.map((n) => `<option value="${esc(n.id)}" ${curNum && n.id === curNum.id ? 'selected' : ''}>${esc(n.name)} — ${esc(n.phone || '')} (${esc(n.status)})</option>`).join('');
+}
+$('#numSelect').addEventListener('change', (e) => {
+  curNum = myNumbers.find((n) => n.id === e.target.value) || null;
+  curChat = null;
+  $('#chatMain').hidden = true; $('#paneEmpty').hidden = false;
+  loadChats(); connectSSE();
+});
+
+/* ---------- chats ---------- */
+async function loadChats(){
+  if (!curNum) return;
+  const j = await api(`/api/numbers/${curNum.id}/chats`);
+  allChats = j.chats || [];
+  const num = myNumbers.find((n) => n.id === curNum.id);
+  $('#lineState').textContent = num ? `Line: ${num.status}${num.me ? ' — ' + num.me.id.split('@')[0] : ''}` : '';
+  renderChatList();
+}
+function chatMatches(c){
+  const q = $('#chatSearch').value.trim().toLowerCase();
+  if (q && !((c.name || '').toLowerCase().includes(q) || c.jid.includes(q))) return false;
+  if (chatFilter === 'unread' && !c.unread) return false;
+  if (chatFilter === 'direct' && isGroup(c.jid)) return false;
+  if (chatFilter === 'groups' && !isGroup(c.jid)) return false;
+  return true;
+}
+function renderChatList(){
+  const ul = $('#chatList');
+  const list = allChats.filter(chatMatches);
+  $('#chatEmpty').hidden = list.length > 0;
+  if (!allChats.length) $('#chatEmpty').textContent = 'No chats yet.';
+  ul.innerHTML = list.map((c) => {
+    const labs = (panel.chatLabels[c.jid] || []).map((lid) => panel.labels.find((l) => l.id === lid)).filter(Boolean);
+    return `<li class="chat ${curChat === c.jid ? 'sel' : ''}" data-jid="${esc(c.jid)}">
+      <span class="avatar ${isGroup(c.jid) ? 'g' : ''}">${esc(initials(c.name))}</span>
+      <span class="mid"><span class="nm">${esc(c.name || c.jid.split('@')[0])}${labs.map((l) => `<span class="labdot" style="background:${esc(l.color)}" title="${esc(l.name)}"></span>`).join('')}</span>
+      <span class="last">${esc(c.lastText || '')}</span></span>
+      <span class="rt"><span class="tm ${c.unread ? 'un' : ''}">${fmtTime(c.lastTs)}</span>${c.unread ? `<span class="badge">${c.unread}</span>` : ''}</span></li>`;
+  }).join('');
+  $$('.chat', ul).forEach((li) => li.addEventListener('click', () => openChat(li.dataset.jid)));
+}
+$('#chatSearch').addEventListener('input', renderChatList);
+$$('#chipset .chip').forEach((ch) => ch.addEventListener('click', () => {
+  $$('#chipset .chip').forEach((x) => x.classList.remove('on'));
+  ch.classList.add('on'); chatFilter = ch.dataset.f; renderChatList();
+}));
+
+async function openChat(jid){
+  curChat = jid;
+  replyTo = null; updateReplyBar();
+  const c = allChats.find((x) => x.jid === jid);
+  $('#paneEmpty').hidden = true;
+  const main = $('#chatMain'); main.hidden = false; main.style.display = 'flex';
+  $('#peerName').textContent = c ? (c.name || jid.split('@')[0]) : jid;
+  $('#peerSub').textContent = isGroup(jid) ? 'Group' : jid.split('@')[0];
+  $('#peerAv').textContent = initials(c?.name || jid);
+  $('#connPill').textContent = curNum ? (myNumbers.find((n) => n.id === curNum.id)?.status || '') : '';
+  $('#connPill').className = 'pill ' + ($('#connPill').textContent === 'connected' ? 'ok' : 'warn');
+  document.getElementById('panelView').classList.add('showchat');
+  $('#backBtn').style.display = window.innerWidth <= 900 ? '' : 'none';
+  renderChatList();
+  await loadMessages();
+}
+$('#backBtn').onclick = () => document.getElementById('panelView').classList.remove('showchat');
+async function loadMessages(){
+  if (!curNum || !curChat) return;
+  const j = await api(`/api/numbers/${curNum.id}/chats/${encodeURIComponent(curChat)}/messages`);
+  renderMessages(j.messages || []);
+  const c = allChats.find((x) => x.jid === curChat); if (c) c.unread = 0;
+  renderChatList();
+}
+function renderMessages(msgs){
+  const box = $('#msgs');
+  let lastDay = '';
+  box.innerHTML = msgs.map((m) => {
+    const d = fmtDay(m.ts);
+    const day = d !== lastDay ? (lastDay = d, `<div class="day">${esc(d)}</div>`) : '';
+    return day + `<div class="m ${m.fromMe ? 'mine' : ''}" data-id="${esc(m.id)}">
+      ${m.quoteText ? `<div class="qt">${esc(m.quoteText)}</div>` : ''}
+      <span>${esc(m.text)}</span>
+      <span class="meta"><span>${fmtTime(m.ts)}</span>${m.fromMe ? '<span class="tick">✓✓</span>' : ''}</span>
+      <button class="mbtn" data-menu="${esc(m.id)}">▾</button></div>`;
+  }).join('') || '<div class="empty">No messages yet.</div>';
+  box.scrollTop = box.scrollHeight;
+  $$('[data-menu]', box).forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); openMenu(b.dataset.menu, e.clientX, e.clientY); }));
+}
+/* message action menu */
+let menuMsg = null;
+function closeMenu(){ const m = $('#mmenu'); if (m) m.remove(); }
+function openMenu(msgId, x, y){
+  closeMenu();
+  const j = curChat && $(`.m[data-id="${CSS.escape(msgId)}"]`);
+  const mine = j && j.classList.contains('mine');
+  const div = document.createElement('div');
+  div.className = 'mmenu'; div.id = 'mmenu';
+  div.style.left = Math.min(x, innerWidth - 190) + 'px'; div.style.top = Math.min(y, innerHeight - 240) + 'px';
+  div.innerHTML = `<button data-a="reply">↩ Reply</button>
+    <button data-a="react">😊 React 👍 ❤️ 😂</button>
+    <button data-a="forward">Forward</button>
+    ${mine ? '<button data-a="delete" style="color:var(--danger)">Delete for everyone</button>' : ''}`;
+  document.body.append(div);
+  menuMsg = msgId;
+  $$('button', div).forEach((b) => b.addEventListener('click', () => { const a = b.dataset.a; closeMenu(); msgAction(a, msgId); }));
+  setTimeout(() => document.addEventListener('click', closeMenu, { once: true }), 0);
+}
+async function msgAction(a, msgId){
+  if (!curNum || !curChat) return;
+  if (a === 'reply') {
+    const j = await api(`/api/numbers/${curNum.id}/chats/${encodeURIComponent(curChat)}/messages`);
+    const m = (j.messages || []).find((x) => x.id === msgId);
+    replyTo = { id: msgId, text: m ? m.text : '' };
+    updateReplyBar(); $('#msgInput').focus();
+  }
+  if (a === 'react') {
+    const emojis = ['👍','❤️','😂','😮','😢','🙏'];
+    const pick = prompt('Emoji chunein (number likhein):\n' + emojis.map((e, i) => `${i + 1}. ${e}`).join('  '), '1');
+    const em = emojis[Number(pick) - 1]; if (!em) return;
+    const r = await api(`/api/numbers/${curNum.id}/react`, { method: 'POST', body: JSON.stringify({ jid: curChat, msgId, emoji: em }) });
+    toast(r.ok ? 'Reaction sent' : (r.error || 'Reaction nahi laga'));
+  }
+  if (a === 'delete') {
+    if (!confirm('Ye message sab ke liye delete karein? Customer ke paas "This message was deleted" dikhega.')) return;
+    const r = await api(`/api/numbers/${curNum.id}/delete`, { method: 'POST', body: JSON.stringify({ jid: curChat, msgId }) });
+    if (r.ok) { toast('Done'); loadMessages(); } else toast(r.error || 'Delete nahi hua');
+  }
+  if (a === 'forward') openForward(msgId);
+}
+function updateReplyBar(){
+  $('#replyBar').classList.toggle('on', !!replyTo);
+  if (replyTo) $('#replyTxt').textContent = '↩ ' + (replyTo.text || '');
+}
+$('#replyCancel').onclick = () => { replyTo = null; updateReplyBar(); };
+
+/* forward */
+let fwdMsg = null;
+function openForward(msgId){
+  fwdMsg = msgId;
+  renderFwdList('');
+  $('#fwdModal').classList.add('on');
+}
+function renderFwdList(q){
+  $('#fwdList').innerHTML = allChats.filter((c) => c.jid !== curChat && (!q || (c.name || '').toLowerCase().includes(q.toLowerCase())))
+    .map((c) => `<label class="chk"><input type="checkbox" value="${esc(c.jid)}"><span class="avatar" style="width:34px;height:34px;font-size:13px">${esc(initials(c.name))}</span>${esc(c.name || c.jid.split('@')[0])}</label>`).join('') || '<p class="muted small">Koi chat nahi mili.</p>';
+}
+$('#fwdSearch').addEventListener('input', (e) => renderFwdList(e.target.value));
+$('#fwdCancel').onclick = () => $('#fwdModal').classList.remove('on');
+$('#fwdSend').onclick = async () => {
+  const toJids = $$('#fwdList input:checked').map((i) => i.value);
+  if (!toJids.length) return toast('Pick at least one chat.');
+  if (toJids.length > 5) return toast('Ek dafa 5 chats tak');
+  const r = await api(`/api/numbers/${curNum.id}/forward`, { method: 'POST', body: JSON.stringify({ fromJid: curChat, msgId: fwdMsg, toJids }) });
+  $('#fwdModal').classList.remove('on');
+  toast(r.ok ? 'Forwarded' : (r.error || 'Forward nahi hua'));
+  loadChats();
+};
+
+/* composer */
+$('#composer').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const ta = $('#msgInput'), text = ta.value.trim();
+  if (!text || !curNum || !curChat) return;
+  ta.value = ''; ta.style.height = 'auto';
+  let r;
+  if (replyTo) { r = await api(`/api/numbers/${curNum.id}/reply`, { method: 'POST', body: JSON.stringify({ jid: curChat, msgId: replyTo.id, text }) }); replyTo = null; updateReplyBar(); }
+  else r = await api(`/api/numbers/${curNum.id}/send`, { method: 'POST', body: JSON.stringify({ jid: curChat, text }) });
+  if (!r.ok) toast(r.error || 'Nahi gaya');
+  await loadMessages(); loadChats();
+});
+$('#msgInput').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#composer').requestSubmit(); } });
+$('#msgInput').addEventListener('input', (e) => { e.target.style.height = 'auto'; e.target.style.height = Math.min(120, e.target.scrollHeight) + 'px'; });
+
+/* SSE */
+function connectSSE(){
+  if (es) { es.close(); es = null; }
+  if (!curNum || !token) return;
+  es = new EventSource(`/api/numbers/${curNum.id}/events?token=${encodeURIComponent(token)}`);
+  es.addEventListener('message', (ev) => {
+    try {
+      const d = JSON.parse(ev.data);
+      loadChats();
+      if (curChat && d.jid === curChat) loadMessages();
+    } catch {}
+  });
+  es.addEventListener('status', () => loadNumbersQuiet());
+}
+async function loadNumbersQuiet(){
+  const n = await api('/api/numbers');
+  if (n.numbers) { myNumbers = n.numbers; buildNumSelect(); }
+}
+
+/* ---------- drawer: labels + notes ---------- */
+$('#peerBtn').onclick = () => { if (curChat) { renderDrawer(); $('#drawer').classList.add('open'); } };
+$('#drawerClose').onclick = () => $('#drawer').classList.remove('open');
+function renderDrawer(){
+  const c = allChats.find((x) => x.jid === curChat);
+  $('#drName').textContent = c ? (c.name || curChat.split('@')[0]) : curChat;
+  $('#drJid').textContent = curChat;
+  $('#drAv').textContent = initials(c?.name || curChat);
+  const assigned = panel.chatLabels[curChat] || [];
+  $('#drLabels').innerHTML = panel.labels.map((l) => `<label class="chk"><input type="checkbox" data-lab="${esc(l.id)}" ${assigned.includes(l.id) ? 'checked' : ''}><span class="labdot" style="background:${esc(l.color)}"></span>${esc(l.name)}<button type="button" data-dellab="${esc(l.id)}" style="margin-left:auto;background:none;border:0;color:var(--danger)">✕</button></label>`).join('') || '<p class="muted small">No labels yet.</p>';
+  $$('#drLabels input[data-lab]').forEach((i) => i.addEventListener('change', async () => {
+    const ids = $$('#drLabels input[data-lab]:checked').map((x) => x.dataset.lab);
+    await api('/api/chat-labels', { method: 'PUT', body: JSON.stringify({ jid: curChat, labelIds: ids }) });
+    panel.chatLabels[curChat] = ids; renderChatList(); toast('Saved.');
+  }));
+  $$('#drLabels [data-dellab]').forEach((b) => b.addEventListener('click', async () => {
+    await api(`/api/labels/${b.dataset.dellab}`, { method: 'DELETE' });
+    await loadPanelData(); renderDrawer(); renderChatList();
+  }));
+  const notes = panel.notes[curChat] || [];
+  $('#drNotes').innerHTML = notes.map((n) => `<div class="note">${esc(n.text)}<div class="by"><span>${esc(n.by || '')} · ${fmtDay(n.ts)} ${fmtTime(n.ts)}</span><button data-delnote="${esc(n.id)}">✕</button></div></div>`).join('') || '<p class="muted small">No notes.</p>';
+  $$('#drNotes [data-delnote]').forEach((b) => b.addEventListener('click', async () => {
+    if (!confirm('Ye note delete karein?')) return;
+    await api(`/api/notes/${b.dataset.delnote}?jid=${encodeURIComponent(curChat)}`, { method: 'DELETE' });
+    await loadPanelData(); renderDrawer();
+  }));
+}
+$('#newLabelForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = $('#newLabelName').value.trim(); if (!name) return;
+  const colors = ['#00a884','#53bdeb','#ffbc38','#f15c6d','#7f66ff','#ff7f3e'];
+  const r = await api('/api/labels', { method: 'POST', body: JSON.stringify({ name, color: colors[panel.labels.length % colors.length] }) });
+  if (r.ok) { $('#newLabelName').value = ''; await loadPanelData(); renderDrawer(); } else toast(r.error || 'Label nahi bana');
+});
+$('#noteForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = $('#noteText').value.trim(); if (!text || !curChat) return;
+  const r = await api('/api/notes', { method: 'POST', body: JSON.stringify({ jid: curChat, text }) });
+  if (r.ok) { $('#noteText').value = ''; await loadPanelData(); renderDrawer(); toast('Saved.'); } else toast(r.error || 'Note save nahi hua');
+});
+
+/* ---------- broadcasts ---------- */
+$('#bcNewBtn').onclick = () => { $('#bcForm').hidden = false; renderBcChats(); };
+$('#bcCancel').onclick = () => { $('#bcForm').hidden = true; };
+function renderBcChats(){
+  $('#bcChats').innerHTML = allChats.map((c) => `<label class="chk"><input type="checkbox" value="${esc(c.jid)}">${esc(c.name || c.jid.split('@')[0])} <span class="muted small">${esc(c.jid.split('@')[0])}</span></label>`).join('') || '<p class="muted small">Pehle WhatsApp number jorein.</p>';
+}
+$('#bcForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const err = $('#bcErr'); err.textContent = '';
+  const jids = $$('#bcChats input:checked').map((i) => i.value);
+  const r = await api(`/api/numbers/${curNum.id}/broadcasts`, { method: 'POST', body: JSON.stringify({ name: $('#bcName').value, text: $('#bcText').value, jids, gapSec: Number($('#bcGap').value || 5) }) });
+  if (!r.ok) { err.textContent = r.error || 'Nahi ho saka.'; return; }
+  $('#bcForm').hidden = true;
+  toast('Broadcast started');
+  renderBroadcasts();
+});
+async function renderBroadcasts(){
+  if (!curNum) return;
+  if (!allChats.length) await loadChats();
+  const j = await api(`/api/numbers/${curNum.id}/broadcasts`);
+  const list = j.broadcasts || [];
+  $('#bcEmpty').hidden = list.length > 0;
+  $('#bcList').innerHTML = list.map((b) => {
+    const done = b.results.filter((r) => r.ok !== null).length, ok = b.results.filter((r) => r.ok === true).length, fail = b.results.filter((r) => r.ok === false).length;
+    const pct = b.results.length ? Math.round(done / b.results.length * 100) : 0;
+    return `<div class="card"><div class="bc-row"><b>${esc(b.name)}</b><span class="pill ${b.status === 'done' ? 'ok' : b.status === 'running' ? 'warn' : 'grey'}">${esc(b.status)}</span><span class="muted small">${fmtDay(b.createdAt / 1000)} — ✓ ${ok} · ✗ ${fail} · ${done}/${b.results.length}</span>${b.status === 'running' ? `<button class="btn sm danger" data-stopbc="${esc(b.id)}">Stop</button>` : ''}</div>
+    <div class="small muted">${esc(b.text)}</div><progress value="${pct}" max="100"></progress>
+    <div class="small">${b.results.map((r) => `<div>${r.ok === true ? '✓' : r.ok === false ? '✗' : '…'} ${esc((allChats.find((c) => c.jid === r.jid)?.name) || r.jid.split('@')[0])}${r.error ? ' — ' + esc(r.error) : ''}</div>`).join('')}</div></div>`;
+  }).join('');
+  $$('#bcList [data-stopbc]').forEach((b) => b.addEventListener('click', async () => {
+    if (!confirm('Ye broadcast band karein? Baaqi logon ko nahi jayega.')) return;
+    await api(`/api/numbers/${curNum.id}/broadcasts/${b.dataset.stopbc}/stop`, { method: 'POST' });
+    renderBroadcasts();
+  }));
+  if (list.some((b) => b.status === 'running')) setTimeout(() => { if ($('#sec-broadcasts').classList.contains('on')) renderBroadcasts(); }, 4000);
+}
+
+/* ---------- status / calls ---------- */
+async function renderStatuses(){
+  if (!curNum) return;
+  const j = await api(`/api/numbers/${curNum.id}/statuses`);
+  const list = j.statuses || [];
+  $('#statusEmpty').hidden = list.length > 0;
+  $('#statusList').innerHTML = list.map((s) => `<div class="card"><div class="bc-row"><span class="avatar" style="width:38px;height:38px;font-size:14px">${esc(initials(s.pushName || s.author))}</span><b>${esc(s.pushName || s.author.split('@')[0] || 'Status')}</b><span class="muted small">${fmtDay(s.ts)} ${fmtTime(s.ts)}</span></div><div>${esc(s.text)}</div></div>`).join('');
+}
+async function renderCalls(){
+  if (!curNum) return;
+  const j = await api(`/api/numbers/${curNum.id}/calls`);
+  const list = j.calls || [];
+  $('#callEmpty').hidden = list.length > 0;
+  $('#callList').innerHTML = list.map((c) => `<div class="card"><div class="bc-row"><span style="font-size:20px">${c.status === 'miss' || c.status === 'decline' ? '📞🔴' : '📞'}</span><b>${esc(String(c.from || '').split('@')[0])}</b><span class="pill grey">${esc(c.status || '')}</span><span class="muted small">${c.isVideo ? 'Video' : 'Voice'}${c.isGroup ? ' · Group' : ''} · ${fmtDay(c.ts)} ${fmtTime(c.ts)}</span></div></div>`).join('');
+}
+
+/* ---------- numbers ---------- */
+async function renderNumbers(){
+  const n = await api('/api/numbers');
+  myNumbers = n.numbers || [];
+  $('#numList').innerHTML = myNumbers.map((x) => `<div class="card"><div class="bc-row"><span class="avatar">${esc(initials(x.name))}</span><div style="flex:1;min-width:0"><b>${esc(x.name)}</b><div class="muted small">${esc(x.phone || '')}${x.me ? ' — ' + esc(x.me.id.split('@')[0]) : ''} · ${x.chats} chats</div></div>
+    <span class="pill ${x.status === 'connected' ? 'ok' : x.status === 'qr' ? 'warn' : 'bad'}">${esc(x.status)}</span>
+    <button class="btn sm ghost" data-use="${esc(x.id)}">Panel</button>
+    <button class="btn sm ghost" data-re="${esc(x.id)}">Reconnect</button>
+    <button class="btn sm danger" data-del="${esc(x.id)}">Delete</button></div></div>`).join('') || '<p class="muted">No numbers yet.</p>';
+  $$('#numList [data-use]').forEach((b) => b.addEventListener('click', () => { curNum = myNumbers.find((x) => x.id === b.dataset.use); buildNumSelect(); switchSection('chats'); loadChats(); connectSSE(); }));
+  $$('#numList [data-re]').forEach((b) => b.addEventListener('click', async () => { await api(`/api/numbers/${b.dataset.re}/reconnect`, { method: 'POST' }); toast('Reconnecting…'); setTimeout(renderNumbers, 2500); }));
+  $$('#numList [data-del]').forEach((b) => b.addEventListener('click', async () => {
+    const typed = prompt('This number and all its chats, labels, notes and broadcasts will be removed from this panel. Nothing is deleted on WhatsApp.\nPakka? "DELETE" likhein:');
+    if (typed !== 'DELETE') return;
+    await api(`/api/numbers/${b.dataset.del}`, { method: 'DELETE' });
+    toast('Number removed.');
+    if (curNum && curNum.id === b.dataset.del) curNum = null;
+    renderNumbers();
+  }));
+}
+
+/* ---------- account ---------- */
+function renderAccount(){
+  if (!me) return;
+  $('#accName').textContent = me.name;
+  $('#accEmail').textContent = me.email;
+  $('#accPhone').textContent = me.phone || '';
+}
+$('#pwForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const err = $('#pwErr'); err.textContent = '';
+  const r = await api('/api/auth/change-password', { method: 'POST', body: JSON.stringify({ current: $('#pwCur').value, next: $('#pwNew').value }) });
+  if (r.ok) { toast('Password changed.'); e.target.reset(); } else err.textContent = r.error || 'Nahi ho saka.';
+});
+
+/* ---------- boot ---------- */
+(async function boot(){
+  applyLang();
+  if (!token) { show('auth'); return; }
+  const m = await api('/api/auth/me');
+  if (!m.ok) { setToken(''); show('auth'); return; }
+  me = m.user;
+  afterLogin();
+})();
+</script>
+</body>
+</html>
